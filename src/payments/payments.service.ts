@@ -134,12 +134,23 @@ export class PaymentsService {
         const txData = response.data.data;
         const finalRefId = txData?.reference || payment.ref_id;
         
-        await this.paymentsRepo.update(payment.id, {
-          status: PaymentStatus.COMPLETED,
-          ref_id: finalRefId,
-        });
-        
-        return { ...payment, status: PaymentStatus.COMPLETED, ref_id: finalRefId } as Payment;
+        if (txData?.status === 'success') {
+          await this.paymentsRepo.update(payment.id, {
+            status: PaymentStatus.COMPLETED,
+            ref_id: finalRefId,
+          });
+          return { ...payment, status: PaymentStatus.COMPLETED, ref_id: finalRefId } as Payment;
+        } else if (txData?.status === 'pending') {
+          // If still pending, just return the current pending status
+          return { ...payment, status: PaymentStatus.PENDING } as Payment;
+        } else {
+          // If failed or any other status, mark as FAILED
+          await this.paymentsRepo.update(payment.id, {
+            status: PaymentStatus.FAILED,
+            ref_id: finalRefId,
+          });
+          return { ...payment, status: PaymentStatus.FAILED, ref_id: finalRefId } as Payment;
+        }
       } else {
         await this.paymentsRepo.update(payment.id, {
           status: PaymentStatus.FAILED,
