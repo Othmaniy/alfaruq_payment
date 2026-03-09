@@ -5,11 +5,20 @@ import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 /**
  * Persistent representation of application user
  */
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin',
+}
+
 @Entity()
 export class User {
   @ApiProperty({ description: 'Auto-generated primary key' })
   @PrimaryGeneratedColumn()
   id: number;
+
+  @ApiProperty({ description: 'The role of the user (admin or user)' })
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  role: UserRole;
 
   @ApiProperty({ description: 'Unique phone number for the user' })
   @IsString()

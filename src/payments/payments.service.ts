@@ -83,6 +83,21 @@ export class PaymentsService {
     }
   }
 
+  async findAll(): Promise<Payment[]> {
+    const payments = await this.paymentsRepo.find({
+      relations: ['user'],
+      order: { id: 'DESC' },
+    });
+
+    // Sanitize user data to remove passwords
+    return payments.map((payment) => {
+      if (payment.user) {
+        delete (payment.user as any).password;
+      }
+      return payment;
+    });
+  }
+
   async findByReference(reference: string): Promise<Payment | null> {
     return this.paymentsRepo.findOne({ 
       where: { tx_ref: reference },

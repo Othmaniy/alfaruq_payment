@@ -8,21 +8,29 @@ import {
   Request,
   Headers,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiCreatedResponse,
-  ApiBadRequestResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiCreatedResponse, ApiBadRequestResponse, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Payment } from './payment.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/user.entity';
 
 @ApiTags('payments')
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
+
+  @ApiBearerAuth('bearerAuth')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get('all')
+  @ApiOperation({ summary: 'Admin only: get all payments' })
+  @ApiCreatedResponse({ description: 'Returns all payments', type: [Payment] })
+  findAll(): Promise<Payment[]> {
+    return this.paymentsService.findAll();
+  }
 
   @ApiBearerAuth('bearerAuth')
   @UseGuards(JwtAuthGuard)
